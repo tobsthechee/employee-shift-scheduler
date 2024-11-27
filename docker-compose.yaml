@@ -1,32 +1,17 @@
-version: '3.8'
+x-project:
+  name: ess-alpine
+
 services:
-  psqldb:
-    image: postgres:14.4
-    restart: unless-stopped
-    env_file: ./.env
-    environment:
-      - POSTGRES_PASSWORD=$PSQL_ROOT_PASSWORD
-      - POSTGRES_USER=$PSQL_USER
-      - POSTGRES_DB=$PSQL_DATABASE
-    ports:
-      - $PSQL_LOCAL_PORT:$PSQL_DOCKER_PORT
-    volumes:
-      - db:/var/lib/postgres
-    networks:
-      - backend
-  
   webapp:
-    depends_on:
-      - psqldb
-    build: 
+    build:
       context: ./webapp
-      args:
-        - DB_HOST=psqldb
-        - DB_USER=$PSQL_USER
-        - DB_USER_PW=$PSQL_ROOT_PASSWORD
-        - DB_NAME=$PSQL_DATABASE
-        - DB_PORT=$PSQL_DOCKER_PORT
     restart: unless-stopped
+    environment:
+      DB_HOST: $EXTERNAL_DB_HOST
+      DB_USER: $PSQL_USER
+      DB_USER_PW: $PSQL_ROOT_PASSWORD
+      DB_NAME: $PSQL_DATABASE
+      DB_PORT: $EXTERNAL_DB_PORT
     networks:
       - backend
 
@@ -35,12 +20,11 @@ services:
     depends_on:
       - webapp
     ports:
-      - $LOCAL_PORT:80 
+      - $LOCAL_PORT:80
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
     networks:
       - backend
-volumes: 
-  db:
+
 networks:
   backend:
